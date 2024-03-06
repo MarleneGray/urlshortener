@@ -1,34 +1,43 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const { urlencoded } = require('body-parser');
+
+/* ----------> My code starts here <-------------- */
+const { urlencoded } = require('body-parser'); //to get the post result from the html
+const dns = require('dns');  //to check if an host is valid
+const url = require('url');  // to use the URL module to retrive the host name from whatever URL
 
 const app = express();
 
 // Basic Configuration
 const port = process.env.PORT || 3000;
 
-app.use(cors());
+app.use(cors()); //I am allawing webpage from every origin to access this resource
 
-app.use('/public', express.static(`${process.cwd()}/public`));
-app.use(express.urlencoded({ extended: true }));
+
+app.use('/public', express.static(`${process.cwd()}/public`)); //serving everything that it's in this directory as a static file
+app.use(express.urlencoded({ extended: true })); // In short this makes req.body possible
 app.get('/', function(req, res) {
-  console.log("dsfds");
-  res.sendFile(process.cwd() + '/views/index.html');
+  res.sendFile(process.cwd() + '/views/index.html'); //serving the index html file. { extended: true } produces and more complex (nested) obhect
 });
-
-// Your first API endpoint
-app.get('/api/hello', function(req, res) {
-  res.json({ greeting: 'hello API' });
-});
-
-
 
 app.post('/api/shorturl', (req,res) =>{
-  res.json({original_url : req.body.url , short_url : 1});
-  console.log(req.body);
+  let newUrl = req.body.url;
+  const recUrl = new URL(newUrl).hostname; //It construct an URL starting from the string newUrl and takes the property host
+  dns.lookup(recUrl, (err, address, family) =>{ // the method dns.lookup reads an url and return err, address and family inside a fallback function 
+      console.log("the address for",recUrl," is ",address,". The family is",family);
+      if(address === undefined)
+        {console.log("Address is undefined");
+        res.json({ error: 'invalid url' });
+        }
+      else
+       {res.json({ original_url : newUrl , short_url :1});}
+       
+  } );
+  
+
 });
 
-app.listen(port, function() {
+ app.listen(port, function() { 
   console.log(`Listening on port ${port}`);
 });
